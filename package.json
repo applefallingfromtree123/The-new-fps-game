@@ -1,0 +1,19 @@
+{
+  "name": "the-new-fps-game",
+  "version": "1.0.0",
+  "description": "Call of Duty style multiplayer FPS - Ground War, Clash, 12v12 and 1v1 modes with online matchmaking",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": ["fps", "multiplayer", "three.js", "game", "matchmaking"],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "three": "^0.169.0",
+    "ws": "^8.18.0"
+  }
+}

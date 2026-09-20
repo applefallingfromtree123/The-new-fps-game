@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>OPERATION BLACKOUT — 멀티플레이 FPS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🎯</text></svg>" />
+<link rel="stylesheet" href="css/style.css" />
+<script type="importmap">
+{ "imports": { "three": "/vendor/three.module.js" } }
+</script>
+</head>
+<body>
+
+<!-- ============================ loading ============================ -->
+<div id="boot" class="overlay">
+  <div class="boot-inner">
+    <div class="logo">OPERATION <span>BLACKOUT</span></div>
+    <div class="boot-bar"><i id="bootFill"></i></div>
+    <div id="bootMsg" class="boot-msg">전장 데이터 로딩 중…</div>
+  </div>
+</div>
+
+<!-- ============================== menu ============================= -->
+<div id="menu" class="screen hidden">
+  <header class="topbar">
+    <div class="logo small">OPERATION <span>BLACKOUT</span></div>
+    <div class="topbar-right">
+      <label class="namefield">콜사인 <input id="playerName" maxlength="16" value="" /></label>
+      <div class="status"><i id="netDot" class="dot"></i><span id="netText">오프라인</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-panel="panel-play">멀티플레이</button>
+    <button class="tab" data-panel="panel-loadout">병과 편성</button>
+    <button class="tab" data-panel="panel-maps">맵 정보</button>
+    <button class="tab" data-panel="panel-settings">설정</button>
+    <button class="tab" data-panel="panel-help">조작법</button>
+  </nav>
+
+  <main class="panels">
+    <!-- play -->
+    <section id="panel-play" class="panel active">
+      <h2 class="section-title">게임 모드</h2>
+      <div id="modeList" class="mode-grid"></div>
+
+      <div class="mode-detail" id="modeDetail">
+        <div class="detail-head">
+          <span id="detailIcon" class="detail-icon">🌍</span>
+          <div>
+            <h3 id="detailName">전장모드</h3>
+            <p id="detailDesc"></p>
+          </div>
+        </div>
+        <div class="detail-stats" id="detailStats"></div>
+
+        <div class="map-choice">
+          <label>맵 선택</label>
+          <select id="mapSelect"></select>
+          <label class="inline">난이도
+            <select id="diffSelect">
+              <option value="recruit">신병</option>
+              <option value="regular" selected>정규군</option>
+              <option value="hardened">베테랑</option>
+              <option value="veteran">특수부대</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="playBtn" class="btn primary big">배치</button>
+        <p class="hint" id="playHint"></p>
+      </div>
+    </section>
+
+    <!-- loadout -->
+    <section id="panel-loadout" class="panel">
+      <h2 class="section-title">병과 편성</h2>
+      <div id="loadoutGrid" class="loadout-grid"></div>
+      <div id="loadoutDetail" class="loadout-detail"></div>
+    </section>
+
+    <!-- maps -->
+    <section id="panel-maps" class="panel">
+      <h2 class="section-title">맵 <span id="mapCount"></span></h2>
+      <div id="mapGrid" class="map-grid"></div>
+    </section>
+
+    <!-- settings -->
+    <section id="panel-settings" class="panel">
+      <h2 class="section-title">설정</h2>
+      <div class="settings">
+        <label>마우스 감도 <input type="range" id="setSens" min="0.4" max="6" step="0.1" /><output id="outSens"></output></label>
+        <label>시야각(FOV) <input type="range" id="setFov" min="65" max="120" step="1" /><output id="outFov"></output></label>
+        <label>렌더 품질 <select id="setQuality">
+          <option value="low">낮음</option><option value="medium" selected>보통</option><option value="high">높음</option>
+        </select></label>
+        <label>화면 흔들림 <input type="range" id="setShake" min="0" max="1.5" step="0.1" /><output id="outShake"></output></label>
+        <label>효과음 <input type="range" id="setVolume" min="0" max="1" step="0.05" /><output id="outVolume"></output></label>
+        <label class="check"><input type="checkbox" id="setInvert" /> 마우스 상하 반전</label>
+        <label class="check"><input type="checkbox" id="setHoldAds" checked /> 조준 유지(누르고 있기)</label>
+        <label class="check"><input type="checkbox" id="setMinimap" checked /> 미니맵 표시</label>
+      </div>
+    </section>
+
+    <!-- help -->
+    <section id="panel-help" class="panel">
+      <h2 class="section-title">조작법</h2>
+      <div class="keys">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>이동</span></div>
+        <div><kbd>Shift</kbd><span>전력 질주</span></div>
+        <div><kbd>Ctrl</kbd> / <kbd>C</kbd><span>앉기</span></div>
+        <div><kbd>Space</kbd><span>점프</span></div>
+        <div><kbd>좌클릭</kbd><span>사격</span></div>
+        <div><kbd>우클릭</kbd><span>정조준(ADS)</span></div>
+        <div><kbd>R</kbd><span>재장전</span></div>
+        <div><kbd>1</kbd><kbd>2</kbd> / <kbd>Q</kbd><span>무기 교체</span></div>
+        <div><kbd>G</kbd><span>수류탄</span></div>
+        <div><kbd>F</kbd><span>섬광/연막탄</span></div>
+        <div><kbd>V</kbd><span>근접 공격</span></div>
+        <div><kbd>X</kbd><span>킬스트릭 사용</span></div>
+        <div><kbd>Tab</kbd><span>점수판</span></div>
+        <div><kbd>Esc</kbd><span>일시정지 / 메뉴</span></div>
+      </div>
+      <p class="hint">브라우저에서 화면을 클릭하면 마우스가 잠기고 전투가 시작됩니다.</p>
+    </section>
+  </main>
+
+  <footer class="menu-foot">
+    <span id="serverInfo"></span>
+  </footer>
+</div>
+
+<!-- =========================== matchmaking ========================= -->
+<div id="matchmaking" class="overlay hidden">
+  <div class="mm-card">
+    <div class="mm-radar"><i></i><i></i><i></i><span class="sweep"></span></div>
+    <h2 id="mmTitle">상대를 찾는 중…</h2>
+    <p id="mmSub">매치메이킹 서버에 연결되었습니다.</p>
+    <div class="mm-stats">
+      <div><b id="mmPlayers">0</b><span>대기 인원</span></div>
+      <div><b id="mmElapsed">0s</b><span>경과</span></div>
+      <div><b id="mmOnline">0</b><span>접속자</span></div>
+    </div>
+    <div id="mmRoster" class="mm-roster"></div>
+    <button id="mmCancel" class="btn ghost">취소</button>
+  </div>
+</div>
+
+<!-- ============================== game ============================= -->
+<div id="game" class="hidden">
+  <canvas id="view"></canvas>
+
+  <div id="hud">
+    <div id="crosshair" class="crosshair">
+      <i class="ch top"></i><i class="ch bottom"></i><i class="ch left"></i><i class="ch right"></i><i class="ch dot"></i>
+    </div>
+    <div id="hitmarker" class="hitmarker"><i></i><i></i><i></i><i></i></div>
+
+    <div id="topHud" class="top-hud">
+      <div class="team-score alpha"><span id="scoreAlpha">0</span></div>
+      <div class="clock">
+        <div id="matchClock">00:00</div>
+        <div id="modeLabel" class="mode-label"></div>
+      </div>
+      <div class="team-score bravo"><span id="scoreBravo">0</span></div>
+    </div>
+
+    <div id="objectiveBar" class="objective-bar"></div>
+
+    <div id="killfeed" class="killfeed"></div>
+
+    <div id="minimapWrap" class="minimap-wrap">
+      <canvas id="minimap" width="260" height="260"></canvas>
+      <div class="compass" id="compass"></div>
+    </div>
+
+    <div id="bottomLeft" class="bottom-left">
+      <div class="health">
+        <div class="health-bar"><i id="healthFill"></i></div>
+        <span id="healthText">100</span>
+      </div>
+      <div id="streakBox" class="streak-box hidden"><span id="streakName"></span><kbd>X</kbd></div>
+      <div id="equipBox" class="equip-box"></div>
+    </div>
+
+    <div id="bottomRight" class="bottom-right">
+      <div id="weaponName" class="weapon-name">M4A1</div>
+      <div class="ammo"><span id="ammoMag">30</span><small id="ammoReserve">/180</small></div>
+      <div id="reloadHint" class="reload-hint hidden">재장전 <kbd>R</kbd></div>
+    </div>
+
+    <div id="scorePopup" class="score-popup"></div>
+    <div id="damageIndicators" class="damage-indicators"></div>
+    <div id="banner" class="banner hidden"></div>
+    <div id="deathScreen" class="death-screen hidden">
+      <h2>전사</h2>
+      <p id="killerInfo"></p>
+      <div class="respawn">재배치까지 <b id="respawnTimer">5</b>초</div>
+    </div>
+    <div id="flashOverlay" class="flash-overlay"></div>
+    <div id="damageVignette" class="damage-vignette"></div>
+    <div id="scopeOverlay" class="scope-overlay hidden"><i></i></div>
+  </div>
+
+  <div id="scoreboard" class="scoreboard hidden">
+    <div class="sb-head">
+      <h2 id="sbMode"></h2>
+      <div id="sbMap"></div>
+    </div>
+    <div class="sb-teams">
+      <div class="sb-team alpha"><h3>연합군 <span id="sbScoreA">0</span></h3><table><thead><tr><th>병사</th><th>점수</th><th>처치</th><th>사망</th><th>어시</th></tr></thead><tbody id="sbAlpha"></tbody></table></div>
+      <div class="sb-team bravo"><h3>반군 <span id="sbScoreB">0</span></h3><table><thead><tr><th>병사</th><th>점수</th><th>처치</th><th>사망</th><th>어시</th></tr></thead><tbody id="sbBravo"></tbody></table></div>
+    </div>
+  </div>
+
+  <div id="pause" class="overlay hidden">
+    <div class="pause-card">
+      <h2>일시정지</h2>
+      <button id="resumeBtn" class="btn primary">복귀</button>
+      <button id="restartBtn" class="btn">재시작</button>
+      <button id="quitBtn" class="btn ghost">메뉴로 나가기</button>
+      <p class="hint">온라인 경기는 일시정지되지 않습니다.</p>
+    </div>
+  </div>
+
+  <div id="results" class="overlay hidden">
+    <div class="results-card">
+      <h1 id="resultTitle">승리</h1>
+      <div id="resultScore" class="result-score"></div>
+      <div id="resultBoard" class="result-board"></div>
+      <div class="result-actions">
+        <button id="againBtn" class="btn primary">다시 하기</button>
+        <button id="backBtn" class="btn ghost">메뉴로</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="clickToPlay" class="click-to-play hidden"><span>클릭하여 조작 시작</span></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
