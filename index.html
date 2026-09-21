@@ -5,9 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>OPERATION BLACKOUT — 멀티플레이 FPS</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🎯</text></svg>" />
-<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="client/css/style.css" />
 <script type="importmap">
-{ "imports": { "three": "/vendor/three.module.js" } }
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "/shared/": "./shared/"
+  }
+}
 </script>
 </head>
 <body>
@@ -239,6 +244,6 @@
   <div id="clickToPlay" class="click-to-play hidden"><span>클릭하여 조작 시작</span></div>
 </div>
 
-<script type="module" src="js/main.js"></script>
+<script type="module" src="client/js/main.js"></script>
 </body>
 </html>

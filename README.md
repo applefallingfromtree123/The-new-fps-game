@@ -4,11 +4,22 @@ Call of Duty 스타일의 멀티플레이 FPS. 브라우저에서 바로 돌아�
 지오메트리·사운드를 전부 코드로 생성합니다. 오프라인(AI 분대)과 온라인(매치메이킹)
 모두 동일한 시뮬레이션 코드를 사용합니다.
 
+## 실행
+
+**웹에서 바로 (GitHub Pages)** — 저장소 루트의 `index.html`을 그대로 열면 됩니다.
+설치 과정 없이 전장 · 격돌 · 12vs12 · 1대1 네 모드를 AI 분대와 플레이할 수 있습니다.
+정적 호스팅에는 매치메이킹 서버가 없으므로 온라인 모드 2종은 자동으로 잠깁니다.
+
+**전체 기능 (온라인 모드 포함)** — 매치메이킹 서버가 필요합니다.
+
 ```bash
 npm install
 npm start          # http://localhost:8080
 npm test           # 공유 로직 유닛 테스트
 ```
+
+`npm install`은 `three.module.js`를 `vendor/`로 복사해 둡니다. 정적 호스팅은 이 사본을
+사용하므로 `node_modules` 없이도 동작합니다.
 
 ## 게임 모드 (6종)
 
@@ -57,6 +68,9 @@ npm test           # 공유 로직 유닛 테스트
 ## 구조
 
 ```
+index.html  게임 진입점 (저장소 루트 = 정적 호스팅의 웹 루트)
+vendor/     three.module.js 사본 (정적 호스팅용)
+
 shared/     클라이언트와 서버가 공유하는 규칙 (변경 시 양쪽에 동시 반영)
   constants.js  이동·체력·팀 상수
   weapons.js    무기/병과/장비 데이터
@@ -73,6 +87,7 @@ server/     Express 정적 서빙 + WebSocket
   room.js       온라인 매치 1개 (30Hz 시뮬레이션, 15Hz 스냅샷)
 
 client/     브라우저 클라이언트 (three.js, 번들러 없음)
+  css/, js/          스타일과 모듈 (index.html이 참조)
   js/game.js         렌더러 + 게임 루프
   js/session_local.js 오프라인: 브라우저가 직접 시뮬레이션
   js/session_net.js   온라인: 서버 권위 + 로컬 예측/보간

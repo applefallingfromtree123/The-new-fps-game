@@ -17,9 +17,12 @@ const ROOT = path.resolve(__dirname, '..');
 const PORT = process.env.PORT || 8080;
 
 const app = express();
+// The same file layout the static host (GitHub Pages) serves, so the game
+// behaves identically whether it is run from here or from a static deploy.
 app.use('/shared', express.static(path.join(ROOT, 'shared'), { extensions: ['js'] }));
-app.use('/vendor', express.static(path.join(ROOT, 'node_modules/three/build')));
-app.use(express.static(path.join(ROOT, 'client')));
+app.use('/vendor', express.static(path.join(ROOT, 'vendor')));
+app.use('/client', express.static(path.join(ROOT, 'client')));
+app.get('/', (_req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 
 app.get('/api/info', (_req, res) => {
   res.json({

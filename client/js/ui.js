@@ -144,10 +144,14 @@ export class MenuUI {
     $('diffSelect').value = this.settings.difficulty;
     $('diffSelect').disabled = !!(m.online && !m.botFill);
 
+    const offline = m.online && this.onlineAvailable === false;
     $('playBtn').textContent = m.online ? '매치 찾기' : '배치';
-    $('playHint').textContent = m.online
-      ? '매치메이킹 서버가 상대를 찾습니다. 정원이 차지 않으면 AI 분대가 투입됩니다. 맵은 서버가 선택합니다.'
-      : `AI ${m.teamSize * 2 - 1}명과 함께 즉시 전투를 시작합니다.`;
+    $('playBtn').classList.toggle('disabled', !!offline);
+    $('playHint').textContent = offline
+      ? '이 페이지에는 매치메이킹 서버가 없어 온라인 모드를 사용할 수 없습니다. 저장소를 내려받아 npm start 로 서버를 켜면 온라인 1vs1 · 12vs12 를 플레이할 수 있습니다. 나머지 4개 모드는 지금 바로 가능합니다.'
+      : m.online
+        ? '매치메이킹 서버가 상대를 찾습니다. 정원이 차지 않으면 AI 분대가 투입됩니다. 맵은 서버가 선택합니다.'
+        : `AI ${m.teamSize * 2 - 1}명과 함께 즉시 전투를 시작합니다.`;
   }
 
   buildLoadouts() {
@@ -262,12 +266,23 @@ export class MenuUI {
   show() { $('menu').classList.remove('hidden'); }
   hide() { $('menu').classList.add('hidden'); }
 
-  setNetStatus(connected, online) {
+  setNetStatus(connected, online, unavailable = false) {
+    this.onlineAvailable = connected;
     $('netDot').className = `dot ${connected ? 'on' : 'off'}`;
-    $('netText').textContent = connected ? `온라인 · ${online}명 접속` : '오프라인 (로컬 전투만 가능)';
+    $('netText').textContent = connected
+      ? `온라인 · ${online}명 접속`
+      : unavailable ? '오프라인 전용 (정적 호스팅)' : '서버 연결 중…';
     $('serverInfo').textContent = connected
       ? `매치메이킹 서버 연결됨 · 접속자 ${online}명 · 맵 ${MAP_DEFS.length}종 · 모드 ${MODE_ORDER.length}종`
-      : '서버에 연결되지 않았습니다. 오프라인 모드는 정상 동작합니다.';
+      : unavailable
+        ? `매치메이킹 서버가 없어 온라인 모드는 비활성화됩니다. 로컬에서 npm start 로 서버를 켜면 사용할 수 있습니다. · 맵 ${MAP_DEFS.length}종 · 모드 ${MODE_ORDER.length}종`
+        : '서버에 연결하는 중입니다. 오프라인 모드는 지금 바로 플레이할 수 있습니다.';
+
+    document.querySelectorAll('.mode-card').forEach((card) => {
+      const mode = MODES[card.dataset.mode];
+      card.classList.toggle('locked', !!mode?.online && unavailable);
+    });
+    if (MODES[this.selectedMode]?.online) this.selectMode(this.selectedMode);
   }
 
   // ------------------------------------------------------------ match flow

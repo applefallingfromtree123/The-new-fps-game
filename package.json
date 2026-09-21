@@ -7,9 +7,17 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "postinstall": "node scripts/vendor-three.js",
+    "vendor": "node scripts/vendor-three.js"
   },
-  "keywords": ["fps", "multiplayer", "three.js", "game", "matchmaking"],
+  "keywords": [
+    "fps",
+    "multiplayer",
+    "three.js",
+    "game",
+    "matchmaking"
+  ],
   "license": "MIT",
   "dependencies": {
     "express": "^4.19.2",

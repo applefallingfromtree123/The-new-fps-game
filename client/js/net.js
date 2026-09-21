@@ -10,11 +10,16 @@ export class Net extends EventTarget {
     this.online = 0;
     this.name = '';
     this.retry = 0;
+    this.maxRetries = 3;
+    this.gaveUp = false;
     this._pingTimer = null;
   }
 
-  connect(name) {
+  /** `force` restarts the retry budget, e.g. when the player asks to play online. */
+  connect(name, force = false) {
     this.name = name || this.name;
+    if (force) { this.gaveUp = false; this.retry = 0; }
+    if (this.gaveUp && !force) return;
     if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) return;
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const url = `${proto}//${location.host}/ws`;
@@ -58,7 +63,13 @@ export class Net extends EventTarget {
 
   _scheduleRetry() {
     if (this._retryTimer) return;
-    const delay = Math.min(8000, 1000 * 2 ** this.retry++);
+    if (this.retry >= this.maxRetries) {
+      // No server answering: this is a static deploy, so stop hammering it.
+      this.gaveUp = true;
+      this.emit('unavailable');
+      return;
+    }
+    const delay = Math.min(4000, 800 * 2 ** this.retry++);
     this._retryTimer = setTimeout(() => {
       this._retryTimer = null;
       this.connect();

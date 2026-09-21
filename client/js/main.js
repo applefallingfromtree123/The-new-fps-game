@@ -45,9 +45,10 @@ async function boot() {
 // --------------------------------------------------------------- net glue
 net.on('open', () => menu.setNetStatus(true, net.online));
 net.on('close', () => {
-  menu.setNetStatus(false, 0);
+  menu.setNetStatus(false, 0, net.gaveUp);
   if (pendingStart) { menu.hideMatchmaking(); pendingStart = null; }
 });
+net.on('unavailable', () => menu.setNetStatus(false, 0, true));
 net.on('presence', (m) => menu.setNetStatus(true, m.online));
 net.on('hello_ok', (m) => menu.setNetStatus(true, m.online));
 net.on('queue', (m) => menu.updateMatchmaking({ ...m, online: net.online }));
@@ -76,7 +77,12 @@ menu.onPlay = (config) => {
   audio.resume();
   if (config.online) {
     if (!net.connected) {
-      alert('온라인 모드는 서버 연결이 필요합니다. 서버를 실행한 뒤 다시 시도하세요.\n(npm start)');
+      // one more attempt, in case the server came up after we gave up
+      net.connect(config.playerName, true);
+      alert('온라인 모드는 매치메이킹 서버가 필요합니다.\n\n'
+        + '이 페이지가 GitHub Pages 같은 정적 호스팅이라면 서버가 없어 사용할 수 없습니다.\n'
+        + '저장소를 받아 "npm install && npm start" 로 실행한 뒤 http://localhost:8080 에서 접속하세요.\n\n'
+        + '전장 · 격돌 · 12vs12 · 1대1 모드는 지금 바로 플레이할 수 있습니다.');
       return;
     }
     pendingStart = config;

@@ -191,7 +191,12 @@ export class Soldier {
     if (s.recoil) {
       this.armR.rotation.x -= s.recoil * 0.6;
       this.weapon.position.z = 0.12 - s.recoil * 0.1;
+    } else {
+      this.weapon.position.z = 0.12;
     }
+    // The rifle is parented to the arm, so it inherits the shoulder rotation.
+    // Counter-rotate it to keep the barrel pointing where the soldier aims.
+    this.weapon.rotation.x = -s.pitch - (this.torso.rotation.x + this.armR.rotation.x);
     if (this.nametag) this.nametag.position.y = crouch ? 1.55 : 2.05;
   }
 
