@@ -16,13 +16,26 @@ const $ = (id) => document.getElementById(id);
 const settings = loadSettings();
 const hud = new Hud();
 const canvas = $('view');
-const input = new Input(canvas, settings);
+const input = new Input(canvas, settings, document.getElementById('game'));
 const game = new Game({ canvas, hud, input, settings });
 const menu = new MenuUI(settings);
 
 let pendingStart = null;      // config for the queued/online match
 let currentConfig = null;
 let inMatch = false;
+
+// a ?server=... query parameter wins over the saved setting
+const serverParam = new URLSearchParams(location.search).get('server');
+if (serverParam) settings.server = serverParam;
+net.setServerUrl(settings.server);
+
+menu.onServerChange = (value) => {
+  net.setServerUrl(value);
+  net.close();
+  net.connect(settings.name || 'Soldier', true);
+};
+
+if (settings.touchUI) input.touch.setVisible(true);
 
 // ------------------------------------------------------------------- boot
 async function boot() {
@@ -117,6 +130,9 @@ function startSession(session) {
 
 function showClickToPlay() {
   const el = $('clickToPlay');
+  el.querySelector('span').textContent = input.usePointerLock
+    ? '클릭하여 조작 시작'
+    : '화면을 탭하여 시작 — 왼쪽은 이동, 오른쪽은 시점';
   el.classList.remove('hidden');
   const go = () => {
     el.classList.add('hidden');
@@ -126,7 +142,7 @@ function showClickToPlay() {
     audio.resume();
   };
   el.onclick = go;
-  // pointer lock needs a user gesture, so we wait for the click
+  // capture needs a user gesture (pointer lock, and audio), so wait for the tap
 }
 
 function restartMatch() {
@@ -151,6 +167,7 @@ function backToMenu() {
   game.stop();
   input.enabled = false;
   input.exitLock();
+  if (settings.touchUI) input.touch.setVisible(false);
   $('game').classList.add('hidden');
   $('pause').classList.add('hidden');
   menu.hideResults();
@@ -162,6 +179,7 @@ input.onPause = () => {
   if (!inMatch || game.matchEnded) return;
   const online = currentConfig?.online;
   $('pause').classList.remove('hidden');
+  input.exitLock();
   if (!online) game.setPaused(true);
 };
 input.onToggleScoreboard = (held) => game.setScoreboardHeld(held);
@@ -169,6 +187,7 @@ input.onToggleScoreboard = (held) => game.setScoreboardHeld(held);
 $('resumeBtn').addEventListener('click', () => {
   $('pause').classList.add('hidden');
   game.setPaused(false);
+  input.enabled = true;
   input.requestLock();
 });
 $('restartBtn').addEventListener('click', () => {
@@ -198,6 +217,9 @@ canvas.addEventListener('click', () => {
     audio.resume();
   }
 });
+
+// keep the renderer sized correctly when iPadOS shows/hides its browser chrome
+window.addEventListener('orientationchange', () => setTimeout(() => game.resize(), 250));
 
 boot();
 

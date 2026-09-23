@@ -12,6 +12,9 @@ const $ = (id) => document.getElementById(id);
 
 const DEFAULT_SETTINGS = {
   sensitivity: 2.0,
+  touchSensitivity: 2.2,
+  touchUI: false,
+  server: '',
   fov: 90,
   quality: 'medium',
   shake: 0.8,
@@ -245,6 +248,7 @@ export class MenuUI {
       });
     };
     bindRange('setSens', 'sensitivity', 'outSens');
+    bindRange('setTouchSens', 'touchSensitivity', 'outTouchSens');
     bindRange('setFov', 'fov', 'outFov');
     bindRange('setShake', 'shake', 'outShake');
     bindRange('setVolume', 'volume', 'outVolume', (v) => Math.round(v * 100));
@@ -257,6 +261,17 @@ export class MenuUI {
     bindCheck('setInvert', 'invertY');
     bindCheck('setHoldAds', 'holdAds');
     bindCheck('setMinimap', 'minimap');
+    bindCheck('setTouchUI', 'touchUI');
+
+    const server = $('setServer');
+    server.value = s.server || '';
+    const applyServer = () => {
+      s.server = server.value.trim();
+      saveSettings(s);
+      this.onServerChange?.(s.server);
+    };
+    server.addEventListener('change', applyServer);
+    $('setServerApply').addEventListener('click', () => { audio.uiClick(); applyServer(); });
 
     const q = $('setQuality');
     q.value = s.quality;

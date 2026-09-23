@@ -160,6 +160,14 @@ select, .map-choice select {
 .settings input[type=range] { flex: 1; accent-color: var(--accent); }
 .settings output { width: 44px; text-align: right; color: var(--accent); font-weight: 700; }
 .settings label.check { gap: 8px; }
+.settings label.server { flex-direction: column; align-items: stretch; gap: 6px; }
+.settings label.server input {
+  padding: 9px 12px; border-radius: 6px; background: #10161f; color: var(--text);
+  border: 1px solid var(--line); font: 600 14px var(--font);
+}
+.settings .sep { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+.settings code { background: #10161f; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.settings .btn { align-self: flex-start; }
 .keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
 .keys div { display: flex; align-items: center; gap: 6px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
 .keys span { margin-left: auto; color: var(--muted); }
@@ -353,4 +361,52 @@ select, .map-choice select {
   .compass { width: 120px; }
   .ammo { font-size: 30px; }
   .results-card { min-width: auto; }
+}
+
+/* ------------------------------------------------------- touch controls */
+.touch-controls {
+  position: absolute; inset: 0; z-index: 12;
+  pointer-events: none; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.touch-controls .touch-zone { position: absolute; top: 0; bottom: 0; pointer-events: auto; touch-action: none; }
+.touch-controls.zones-off .touch-zone { pointer-events: none; }
+.touch-controls .touch-zone.left { left: 0; width: 42%; }
+.touch-controls .touch-zone.right { right: 0; width: 58%; }
+
+.touch-controls .stick { position: fixed; width: 0; height: 0; pointer-events: none; }
+.touch-controls .stick .base {
+  position: absolute; left: 50%; top: 50%; width: 132px; height: 132px; margin: -66px 0 0 -66px;
+  border-radius: 50%; border: 2px solid rgba(200, 216, 232, .38); background: rgba(12, 18, 26, .3);
+}
+.touch-controls .stick .knob {
+  position: absolute; left: 0; top: 0; width: 58px; height: 58px;
+  border-radius: 50%; background: rgba(226, 236, 248, .42); border: 2px solid rgba(255, 255, 255, .55);
+  transform: translate(-50%, -50%);
+}
+
+.touch-controls .touch-buttons {
+  position: absolute; right: 14px; bottom: 96px; width: min(330px, 46vw);
+  display: flex; flex-wrap: wrap-reverse; justify-content: flex-end; align-content: flex-end; gap: 10px;
+  pointer-events: none;
+}
+.touch-controls .touch-top { position: absolute; top: 10px; right: 16px; display: flex; gap: 8px; }
+
+.tbtn {
+  pointer-events: auto; touch-action: none;
+  width: 62px; height: 62px; border-radius: 50%;
+  background: rgba(20, 28, 38, .52); border: 2px solid rgba(190, 208, 226, .45);
+  color: #e6edf5; font: 700 12px/1 var(--font); letter-spacing: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+}
+.tbtn:active, .tbtn.active { background: rgba(255, 194, 71, .5); border-color: var(--accent); color: #17202b; }
+.tbtn.fire { width: 96px; height: 96px; font-size: 15px; border-color: rgba(255, 120, 100, .7); background: rgba(120, 30, 24, .5); }
+.tbtn.fire:active, .tbtn.fire.active { background: rgba(255, 95, 82, .65); color: #fff; }
+.tbtn.small {
+  width: auto; height: 34px; border-radius: 17px; padding: 0 14px; font-size: 12px;
+}
+@media (max-width: 820px) {
+  .tbtn { width: 52px; height: 52px; font-size: 11px; }
+  .tbtn.fire { width: 78px; height: 78px; font-size: 13px; }
+  .touch-controls .touch-buttons { bottom: 76px; width: min(250px, 50vw); }
 }

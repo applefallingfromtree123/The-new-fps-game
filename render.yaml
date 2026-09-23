@@ -1,0 +1,13 @@
+# Render Blueprint: deploys the matchmaking server on the free plan.
+# Render injects PORT, which server/index.js already honours.
+services:
+  - type: web
+    name: operation-blackout
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/info
+    envVars:
+      - key: NODE_VERSION
+        value: "22"

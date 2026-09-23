@@ -6,7 +6,7 @@ import { PLAYER, TEAM, SCORE, DAMAGE_MULTIPLIER, KILLSTREAKS } from './constants
 import { WEAPONS, LOADOUTS, MELEE, LETHALS, TACTICALS, getWeapon, fireInterval, damageAtRange } from './weapons.js';
 import { getMode, OBJECTIVE, DIFFICULTY } from './modes.js';
 import { buildMap } from './maps.js';
-import { CollisionWorld, moveCharacter, applyMovementInput, rayPlayer } from './physics.js';
+import { CollisionWorld, moveCharacter, applyMovementInput, rayPlayer, wishVector } from './physics.js';
 import { NavGrid } from './nav.js';
 import { makeRng } from './rng.js';
 import { BotBrain, BOT_NAMES } from './bot.js';
@@ -299,11 +299,8 @@ export class MatchSim {
     if (def.cls === 'lmg' || def.cls === 'sniper') speed *= 0.93;
     if (this.state !== MATCH_STATE.LIVE) speed *= 0.0;
 
-    const sin = Math.sin(e.yaw), cos = Math.cos(e.yaw);
-    // yaw 0 looks toward +z
-    const wishX = input.right * cos + input.forward * sin;
-    const wishZ = -input.right * sin + input.forward * cos;
-    applyMovementInput(e, wishX, wishZ, speed, dt);
+    const wish = wishVector(e.yaw, input.forward, input.right);
+    applyMovementInput(e, wish.x, wish.z, speed, dt);
 
     if (input.jump && e.onGround && live) {
       e.vel.y = PLAYER.jumpVelocity;

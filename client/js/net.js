@@ -13,6 +13,24 @@ export class Net extends EventTarget {
     this.maxRetries = 3;
     this.gaveUp = false;
     this._pingTimer = null;
+    this.serverUrl = null;
+  }
+
+  /**
+   * Point the client at a matchmaking server. Accepts a bare host, an http(s)
+   * URL or a ws(s) URL; the /ws path is added when missing. Empty resets to
+   * the page's own origin (how the bundled `npm start` server is reached).
+   */
+  setServerUrl(value) {
+    const raw = (value || '').trim();
+    if (!raw) { this.serverUrl = null; return null; }
+    let url = raw;
+    if (!/^[a-z]+:\/\//i.test(url)) url = `wss://${url}`;
+    url = url.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
+    url = url.replace(/\/+$/, '');
+    if (!/\/ws$/.test(url)) url += '/ws';
+    this.serverUrl = url;
+    return url;
   }
 
   /** `force` restarts the retry budget, e.g. when the player asks to play online. */
@@ -22,7 +40,7 @@ export class Net extends EventTarget {
     if (this.gaveUp && !force) return;
     if (this.ws && (this.ws.readyState === 0 || this.ws.readyState === 1)) return;
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${proto}//${location.host}/ws`;
+    const url = this.serverUrl || `${proto}//${location.host}/ws`;
     try {
       this.ws = new WebSocket(url);
     } catch {

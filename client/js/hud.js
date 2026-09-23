@@ -51,8 +51,9 @@ export class Hud {
   }
 
   updateCompass(yaw) {
-    // yaw 0 faces +z, which we call north
-    const facing = ((yaw * 180) / Math.PI + 360) % 360;
+    // yaw 0 faces +z (north). Turning right lowers yaw, so the compass
+    // bearing is the negated yaw.
+    const facing = ((-yaw * 180) / Math.PI + 360) % 360;
     const width = this.el.compass.clientWidth || 180;
     for (const m of this.compassMarks) {
       let rel = ((m.deg - facing + 540) % 360) - 180;

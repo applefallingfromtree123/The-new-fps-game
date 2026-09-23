@@ -321,8 +321,9 @@ export class BotBrain {
       let rel = desiredYaw - e.yaw;
       while (rel > Math.PI) rel -= Math.PI * 2;
       while (rel < -Math.PI) rel += Math.PI * 2;
+      // project the desired heading onto the forward/right basis
       input.forward = Math.cos(rel) * speedScale;
-      input.right = Math.sin(rel) * speedScale;
+      input.right = -Math.sin(rel) * speedScale;
     }
 
     // hop small ledges

@@ -62,9 +62,10 @@ export class Minimap {
 
     const pxPerMeter = R / this.range;
 
-    // rotate the world so the player always faces up
+    // Rotate the world so the player always faces up. The extra half turn is
+    // what lines the map up with the camera basis (forward +z, right -x).
     ctx.translate(R, R);
-    ctx.rotate(view.yaw);
+    ctx.rotate(view.yaw + Math.PI);
     ctx.scale(pxPerMeter / this.staticScale, pxPerMeter / this.staticScale);
     ctx.translate(-this.staticSize / 2 - view.x * this.staticScale, -this.staticSize / 2 - view.z * this.staticScale);
     ctx.drawImage(this.static, 0, 0);
@@ -75,7 +76,7 @@ export class Minimap {
     const project = (x, z) => {
       const dx = (x - view.x) * pxPerMeter;
       const dz = (z - view.z) * pxPerMeter;
-      return { x: R + dx * cos - dz * sin, y: R + dx * sin + dz * cos };
+      return { x: R - (dx * cos - dz * sin), y: R - (dx * sin + dz * cos) };
     };
 
     ctx.save();

@@ -2,7 +2,7 @@
 // from snapshots and predict our own movement locally so aiming stays crisp.
 
 import { buildMap } from '/shared/maps.js';
-import { CollisionWorld, moveCharacter, applyMovementInput } from '/shared/physics.js';
+import { CollisionWorld, moveCharacter, applyMovementInput, wishVector } from '/shared/physics.js';
 import { PLAYER, TEAM } from '/shared/constants.js';
 import { getWeapon, LOADOUTS } from '/shared/weapons.js';
 import { getMode } from '/shared/modes.js';
@@ -140,10 +140,8 @@ export class NetSession {
       if (def.cls === 'lmg' || def.cls === 'sniper') speed *= 0.93;
       if (this.state !== MATCH_STATE.LIVE) speed = 0;
 
-      const sin = Math.sin(input.yaw), cos = Math.cos(input.yaw);
-      const wishX = input.right * cos + input.forward * sin;
-      const wishZ = -input.right * sin + input.forward * cos;
-      applyMovementInput(this.pred, wishX, wishZ, speed, dt);
+      const wish = wishVector(input.yaw, input.forward, input.right);
+      applyMovementInput(this.pred, wish.x, wish.z, speed, dt);
       if (input.jump && this.pred.onGround) { this.pred.vel.y = PLAYER.jumpVelocity; this.pred.onGround = false; }
       moveCharacter(this.world, this.pred, dt);
       this.predSprinting = sprinting;

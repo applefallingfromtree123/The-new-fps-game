@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { MAP_DEFS, buildMap, mapsBySize } from '../shared/maps.js';
 import { MODES, MODE_ORDER, getMode, OBJECTIVE } from '../shared/modes.js';
 import { WEAPONS, LOADOUTS, damageAtRange, fireInterval, getWeapon } from '../shared/weapons.js';
-import { CollisionWorld, moveCharacter, rayPlayer } from '../shared/physics.js';
+import { CollisionWorld, moveCharacter, rayPlayer, wishVector } from '../shared/physics.js';
 import { NavGrid } from '../shared/nav.js';
 import { MatchSim, MATCH_STATE } from '../shared/match.js';
 import { PLAYER, TEAM } from '../shared/constants.js';
@@ -69,6 +69,77 @@ test('characters fall, land and are blocked by walls', () => {
   s.vel.x = 40;
   for (let i = 0; i < 300; i++) { s.vel.x = 40; moveCharacter(world, s, 1 / 60); }
   assert.ok(Math.abs(s.pos.x) <= world.map.hx, 'player escaped the arena');
+});
+
+test('movement basis matches the camera basis', () => {
+  // The renderer sets camera.rotation.y = yaw + PI (YXZ), so in world space
+  //   forward = (sin yaw, cos yaw)      camera -Z
+  //   right   = (-cos yaw, sin yaw)     camera +X
+  // Those two vectors are the ground truth for W/A/S/D.
+  for (const yaw of [0, 0.7, -1.3, Math.PI / 2, Math.PI, -2.9]) {
+    const fwd = wishVector(yaw, 1, 0);
+    assert.ok(Math.abs(fwd.x - Math.sin(yaw)) < 1e-9, `forward.x at yaw ${yaw}`);
+    assert.ok(Math.abs(fwd.z - Math.cos(yaw)) < 1e-9, `forward.z at yaw ${yaw}`);
+
+    const right = wishVector(yaw, 0, 1);
+    assert.ok(Math.abs(right.x + Math.cos(yaw)) < 1e-9, `right.x at yaw ${yaw}`);
+    assert.ok(Math.abs(right.z - Math.sin(yaw)) < 1e-9, `right.z at yaw ${yaw}`);
+
+    // forward and strafe must stay perpendicular
+    assert.ok(Math.abs(fwd.x * right.x + fwd.z * right.z) < 1e-9, `basis not orthogonal at yaw ${yaw}`);
+  }
+  // back-pedalling and left-strafing are exact mirrors
+  const left = wishVector(1.1, 0, -1), right = wishVector(1.1, 0, 1);
+  assert.ok(Math.abs(left.x + right.x) < 1e-9 && Math.abs(left.z + right.z) < 1e-9);
+});
+
+test('W A S D move the player the way the camera faces', () => {
+  const sim = new MatchSim({ modeId: 'clash', mapId: 'the_pit', seed: 5, warmup: 0 });
+  sim.start();
+  const p = sim.addEntity({ name: 'P', team: TEAM.ALPHA });
+  sim.step(0.05);
+
+  // stand somewhere with clearance in every direction
+  const nav = sim.nav;
+  let spot = null;
+  for (let c = 1; c < nav.cols - 1 && !spot; c++) {
+    for (let r = 1; r < nav.rows - 1 && !spot; r++) {
+      let open = true;
+      for (let dc = -1; dc <= 1 && open; dc++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          if (!nav.walk[(r + dr) * nav.cols + (c + dc)]) { open = false; break; }
+        }
+      }
+      if (open) spot = nav.cellCenter(c, r);
+    }
+  }
+  assert.ok(spot, 'the test map needs an open area');
+
+  const drive = (forward, right, yaw = 0) => {
+    p.pos.x = spot.x; p.pos.z = spot.z; p.pos.y = 0;
+    p.vel.x = p.vel.y = p.vel.z = 0;
+    Object.assign(p.input, { forward, right, yaw, pitch: 0, sprint: false, crouch: false, jump: false });
+    for (let i = 0; i < 12; i++) sim.step(1 / 60);
+    return { x: p.pos.x - spot.x, z: p.pos.z - spot.z };
+  };
+
+  // facing +z (yaw 0): W goes +z, S goes -z, D strafes -x, A strafes +x
+  const w = drive(1, 0);
+  assert.ok(w.z > 0.05 && Math.abs(w.x) < 0.02, `W should move forward, got ${JSON.stringify(w)}`);
+  const back = drive(-1, 0);
+  assert.ok(back.z < -0.05 && Math.abs(back.x) < 0.02, `S should move back, got ${JSON.stringify(back)}`);
+  const d = drive(0, 1);
+  assert.ok(d.x < -0.05 && Math.abs(d.z) < 0.02, `D should strafe camera-right, got ${JSON.stringify(d)}`);
+  const a = drive(0, -1);
+  assert.ok(a.x > 0.05 && Math.abs(a.z) < 0.02, `A should strafe camera-left, got ${JSON.stringify(a)}`);
+  // A and D must be opposites, never the same direction
+  assert.ok(a.x * d.x < 0, 'A and D must move in opposite directions');
+
+  // facing +x (yaw = PI/2): W goes +x, D strafes +z
+  const w2 = drive(1, 0, Math.PI / 2);
+  assert.ok(w2.x > 0.05 && Math.abs(w2.z) < 0.02, `W at yaw 90 should go +x, got ${JSON.stringify(w2)}`);
+  const d2 = drive(0, 1, Math.PI / 2);
+  assert.ok(d2.z > 0.05 && Math.abs(d2.x) < 0.02, `D at yaw 90 should go +z, got ${JSON.stringify(d2)}`);
 });
 
 test('raycasts hit geometry and player hitboxes', () => {

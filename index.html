@@ -96,6 +96,7 @@
       <h2 class="section-title">설정</h2>
       <div class="settings">
         <label>마우스 감도 <input type="range" id="setSens" min="0.4" max="6" step="0.1" /><output id="outSens"></output></label>
+        <label>터치·드래그 감도 <input type="range" id="setTouchSens" min="0.5" max="6" step="0.1" /><output id="outTouchSens"></output></label>
         <label>시야각(FOV) <input type="range" id="setFov" min="65" max="120" step="1" /><output id="outFov"></output></label>
         <label>렌더 품질 <select id="setQuality">
           <option value="low">낮음</option><option value="medium" selected>보통</option><option value="high">높음</option>
@@ -105,6 +106,13 @@
         <label class="check"><input type="checkbox" id="setInvert" /> 마우스 상하 반전</label>
         <label class="check"><input type="checkbox" id="setHoldAds" checked /> 조준 유지(누르고 있기)</label>
         <label class="check"><input type="checkbox" id="setMinimap" checked /> 미니맵 표시</label>
+        <label class="check"><input type="checkbox" id="setTouchUI" /> 화면 조작 버튼 항상 표시</label>
+        <hr class="sep" />
+        <label class="server">매치메이킹 서버
+          <input type="text" id="setServer" placeholder="예: my-fps.onrender.com (비우면 이 사이트)" />
+        </label>
+        <p class="hint">GitHub Pages 같은 정적 호스팅에는 서버가 없습니다. 서버를 따로 배포했다면 주소를 넣으세요. 주소창에 <code>?server=주소</code> 를 붙여도 됩니다.</p>
+        <button id="setServerApply" class="btn">서버에 연결</button>
       </div>
     </section>
 
@@ -127,7 +135,18 @@
         <div><kbd>Tab</kbd><span>점수판</span></div>
         <div><kbd>Esc</kbd><span>일시정지 / 메뉴</span></div>
       </div>
-      <p class="hint">브라우저에서 화면을 클릭하면 마우스가 잠기고 전투가 시작됩니다.</p>
+      <p class="hint">데스크톱에서는 화면을 클릭하면 마우스가 잠기고 전투가 시작됩니다.</p>
+
+      <h2 class="section-title" style="margin-top:22px">터치 조작 (아이패드 · 스마트폰)</h2>
+      <div class="keys">
+        <div><kbd>왼쪽 절반</kbd><span>드래그하여 이동 (끝까지 밀면 질주)</span></div>
+        <div><kbd>오른쪽 절반</kbd><span>드래그하여 시점 이동</span></div>
+        <div><kbd>오른쪽 탭</kbd><span>사격</span></div>
+        <div><kbd>사격</kbd><span>누르고 있으면 연사</span></div>
+        <div><kbd>조준 · 앉기</kbd><span>토글 방식</span></div>
+        <div><kbd>메뉴 버튼</kbd><span>일시정지</span></div>
+      </div>
+      <p class="hint">iPadOS · iOS 사파리는 마우스 잠금(Pointer Lock)을 지원하지 않아 마우스로 시점을 돌릴 수 없습니다. 이 경우 화면 조작 버튼이 자동으로 나타나며, 트랙패드로 오른쪽 영역을 드래그해도 시점이 돌아갑니다. 키보드 WASD 는 그대로 사용할 수 있습니다.</p>
     </section>
   </main>
 

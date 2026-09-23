@@ -260,6 +260,21 @@ export function moveCharacter(world, state, dt) {
   return state;
 }
 
+/**
+ * Camera-relative movement basis.
+ *
+ * yaw 0 looks toward +z, so forward = (sin yaw, cos yaw). The strafe axis is
+ * forward x up = (-cos yaw, sin yaw), which is what the renderer's camera
+ * actually shows as screen-right. Getting this sign wrong swaps A and D.
+ */
+export function wishVector(yaw, forward, right) {
+  const sin = Math.sin(yaw), cos = Math.cos(yaw);
+  return {
+    x: forward * sin - right * cos,
+    z: forward * cos + right * sin,
+  };
+}
+
 /** Horizontal acceleration with ground friction, Quake-style. */
 export function applyMovementInput(state, wishX, wishZ, wishSpeed, dt) {
   const v = state.vel;
