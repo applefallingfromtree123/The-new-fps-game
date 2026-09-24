@@ -32,19 +32,46 @@ npm test           # 공유 로직 유닛 테스트
 | 🌐 **온라인 1vs1** *(특별)* | 1 vs 1 | 매치메이킹 랭크 결투 | 4라운드 선취 |
 | 🛰️ **온라인 12vs12** *(특별)* | 12 vs 12 | 매치메이킹 대규모 전장 | 150킬 / 12분 |
 
-### 온라인 모드를 웹에서 쓰려면
+### 온라인 모드를 쓰려면 — 매치메이킹 서버 세우기
 
-GitHub Pages는 정적 파일만 서빙하므로 매치메이킹 서버(Node + WebSocket)를 돌릴 수 없습니다.
-서버를 무료로 배포한 뒤, 게임 **설정 → 매치메이킹 서버**에 주소를 넣거나 주소창에
-`?server=내주소.onrender.com` 을 붙이면 Pages에 올린 클라이언트가 그 서버에 접속합니다.
+GitHub Pages는 정적 파일만 서빙하므로 Node 서버를 돌릴 수 없습니다. 아래 셋 중 하나를
+골라 서버를 띄운 뒤, 게임 **설정 → 매치메이킹 서버**에 주소를 넣거나 주소창에
+`?server=주소` 를 붙이면 됩니다.
 
-| 호스트 | 방법 |
-|---|---|
-| Render | 저장소를 연결하고 `render.yaml` 블루프린트로 배포 (무료 플랜) |
-| Fly.io | `fly launch --copy-config && fly deploy` (`fly.toml` 포함) |
-| 그 외 Docker 호스트 | 저장소의 `Dockerfile` 사용 |
+**A. 내 컴퓨터에서 (같은 와이파이, 계정·비용 없음)**
 
-서버는 `PORT` 환경변수를 따르며, 상태 확인은 `GET /api/info` 입니다.
+```bash
+git clone https://github.com/applefallingfromtree123/The-new-fps-game
+cd The-new-fps-game
+npm install
+npm start
+```
+
+컴퓨터의 내부 IP(예: `192.168.0.12`)를 확인해 같은 와이파이의 다른 기기에서
+`http://192.168.0.12:8080` 으로 접속하면 바로 같이 플레이할 수 있습니다.
+Pages(https) 페이지에서 `ws://` 로컬 서버로는 브라우저가 연결을 막으므로,
+이 방식에서는 서버가 띄운 주소로 직접 접속하세요.
+
+**B. Render (브라우저만으로 가능 — 아이패드에서도 됨)**
+
+1. <https://render.com> 가입 (GitHub 계정으로 로그인, 카드 불필요)
+2. **New → Blueprint** 선택
+3. 이 저장소를 고르고 브랜치는 `claude/fps-game-cod-style-iqvt8s` 선택
+4. 저장소의 `render.yaml` 을 읽어 설정이 자동으로 잡히면 **Apply**
+5. 배포가 끝나면 `https://<서비스이름>.onrender.com` 주소가 생깁니다
+6. 게임 설정의 매치메이킹 서버에 `<서비스이름>.onrender.com` 입력
+
+무료 플랜은 15분간 아무도 접속하지 않으면 서버가 잠들고, 다시 깨우는 데 1분 가까이
+걸립니다. 클라이언트가 `/api/info` 를 먼저 두드려 깨우고 기다리므로 접속은 되지만,
+첫 접속만 느립니다. 성능도 0.1 CPU / 512MB 라 방 한두 개 수준입니다.
+
+**C. Docker 를 지원하는 아무 호스트**
+
+저장소의 `Dockerfile` 을 그대로 쓰면 됩니다. Fly.io 는 `fly.toml` 이 들어 있어
+`fly launch --copy-config && fly deploy` 로 끝납니다.
+
+서버는 `PORT` 환경변수를 따르고, 상태 확인은 `GET /api/info` 입니다.
+클라이언트가 다른 도메인에 있어도 되도록 `/api` 응답에는 CORS 헤더가 붙습니다.
 
 온라인 모드는 매치메이킹 대기열에 들어가 실제 상대를 찾습니다.
 - **온라인 1vs1**: 45초 안에 상대가 없으면 AI 상대로 전환해 바로 시작합니다.

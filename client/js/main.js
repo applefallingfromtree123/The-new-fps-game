@@ -32,7 +32,7 @@ net.setServerUrl(settings.server);
 menu.onServerChange = (value) => {
   net.setServerUrl(value);
   net.close();
-  net.connect(settings.name || 'Soldier', true);
+  net.connectWithWake(settings.name || 'Soldier');
 };
 
 if (settings.touchUI) input.touch.setVisible(true);
@@ -42,7 +42,10 @@ async function boot() {
   const steps = [
     ['전장 데이터 로딩 중…', () => buildMap(MAP_DEFS[0].id)],
     ['무기 프로파일 준비 중…', () => null],
-    ['매치메이킹 서버 연결 중…', () => net.connect(settings.name || 'Soldier')],
+    ['매치메이킹 서버 연결 중…', () => {
+      if (net.serverUrl) net.connectWithWake(settings.name || 'Soldier');
+      else net.connect(settings.name || 'Soldier');
+    }],
   ];
   for (let i = 0; i < steps.length; i++) {
     $('bootMsg').textContent = steps[i][0];
@@ -62,6 +65,7 @@ net.on('close', () => {
   if (pendingStart) { menu.hideMatchmaking(); pendingStart = null; }
 });
 net.on('unavailable', () => menu.setNetStatus(false, 0, true));
+net.on('waking', () => menu.setNetStatus(false, 0, false, true));
 net.on('presence', (m) => menu.setNetStatus(true, m.online));
 net.on('hello_ok', (m) => menu.setNetStatus(true, m.online));
 net.on('queue', (m) => menu.updateMatchmaking({ ...m, online: net.online }));
@@ -91,7 +95,13 @@ menu.onPlay = (config) => {
   if (config.online) {
     if (!net.connected) {
       // one more attempt, in case the server came up after we gave up
-      net.connect(config.playerName, true);
+      net.connectWithWake(config.playerName);
+      if (net.serverUrl) {
+        alert('설정한 서버에 연결하는 중입니다.\n\n'
+          + '무료 호스팅은 쉬는 동안 서버가 잠들기 때문에 첫 접속에 1분까지 걸릴 수 있습니다.\n'
+          + '상단 표시가 "온라인"으로 바뀌면 다시 눌러주세요.');
+        return;
+      }
       alert('온라인 모드는 매치메이킹 서버가 필요합니다.\n\n'
         + '이 페이지가 GitHub Pages 같은 정적 호스팅이라면 서버가 없어 사용할 수 없습니다.\n'
         + '저장소를 받아 "npm install && npm start" 로 실행한 뒤 http://localhost:8080 에서 접속하세요.\n\n'

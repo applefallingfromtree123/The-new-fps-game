@@ -281,15 +281,18 @@ export class MenuUI {
   show() { $('menu').classList.remove('hidden'); }
   hide() { $('menu').classList.add('hidden'); }
 
-  setNetStatus(connected, online, unavailable = false) {
+  setNetStatus(connected, online, unavailable = false, waking = false) {
     this.onlineAvailable = connected;
     $('netDot').className = `dot ${connected ? 'on' : 'off'}`;
     $('netText').textContent = connected
       ? `온라인 · ${online}명 접속`
-      : unavailable ? '오프라인 전용 (정적 호스팅)' : '서버 연결 중…';
+      : waking ? '서버를 깨우는 중…'
+        : unavailable ? '오프라인 전용 (서버 없음)' : '서버 연결 중…';
     $('serverInfo').textContent = connected
       ? `매치메이킹 서버 연결됨 · 접속자 ${online}명 · 맵 ${MAP_DEFS.length}종 · 모드 ${MODE_ORDER.length}종`
-      : unavailable
+      : waking
+        ? '설정한 서버를 깨우는 중입니다. 무료 플랜은 첫 접속에 1분까지 걸릴 수 있습니다.'
+        : unavailable
         ? `매치메이킹 서버가 없어 온라인 모드는 비활성화됩니다. 로컬에서 npm start 로 서버를 켜면 사용할 수 있습니다. · 맵 ${MAP_DEFS.length}종 · 모드 ${MODE_ORDER.length}종`
         : '서버에 연결하는 중입니다. 오프라인 모드는 지금 바로 플레이할 수 있습니다.';
 

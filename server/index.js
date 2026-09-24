@@ -24,6 +24,13 @@ app.use('/vendor', express.static(path.join(ROOT, 'vendor')));
 app.use('/client', express.static(path.join(ROOT, 'client')));
 app.get('/', (_req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 
+// The client may be served from somewhere else (GitHub Pages) and uses this
+// endpoint to check the server is awake before opening a WebSocket.
+app.use('/api', (_req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 app.get('/api/info', (_req, res) => {
   res.json({
     protocol: NET.protocolVersion,

@@ -12,6 +12,7 @@ export class Net extends EventTarget {
     this.retry = 0;
     this.maxRetries = 3;
     this.gaveUp = false;
+    this.waking = false;
     this._pingTimer = null;
     this.serverUrl = null;
   }
@@ -25,12 +26,75 @@ export class Net extends EventTarget {
     const raw = (value || '').trim();
     if (!raw) { this.serverUrl = null; return null; }
     let url = raw;
-    if (!/^[a-z]+:\/\//i.test(url)) url = `wss://${url}`;
+    if (!/^[a-z]+:\/\//i.test(url)) {
+      // A bare host defaults to TLS, except for a machine on the local network
+      // (a server started with `npm start`), which has no certificate.
+      const host = url.split('/')[0].split(':')[0];
+      const isLocal = /^(localhost|127\.0\.0\.1|\[?::1\]?)$/i.test(host)
+        || /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)
+        || /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)
+        || /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(host)
+        || /\.local$/i.test(host);
+      url = `${isLocal ? 'ws' : 'wss'}://${url}`;
+    }
     url = url.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:');
     url = url.replace(/\/+$/, '');
     if (!/\/ws$/.test(url)) url += '/ws';
     this.serverUrl = url;
+    // a remote host may be asleep (free tiers spin down), so allow far more
+    // reconnect attempts than for a server running on this same origin
+    this.maxRetries = 12;
     return url;
+  }
+
+  /** HTTP form of the configured server, used for the wake-up probe. */
+  get infoUrl() {
+    if (!this.serverUrl) return null;
+    return this.serverUrl
+      .replace(/^ws:/i, 'http:')
+      .replace(/^wss:/i, 'https:')
+      .replace(/\/ws$/, '/api/info');
+  }
+
+  /**
+   * Free hosting plans suspend an idle service and take up to a minute to
+   * start it again. Poll the health endpoint first so the socket is only
+   * opened once the server is actually listening.
+   */
+  async wake(timeoutMs = 90000) {
+    const url = this.infoUrl;
+    if (!url) return true;
+    this.waking = true;
+    this.emit('waking');
+    const deadline = Date.now() + timeoutMs;
+    let attempt = 0;
+    while (Date.now() < deadline) {
+      attempt++;
+      try {
+        const res = await fetch(`${url}?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          this.waking = false;
+          this.emit('awake', await res.json().catch(() => ({})));
+          return true;
+        }
+      } catch { /* still starting up */ }
+      this.emit('waking', { attempt, elapsed: Math.round((timeoutMs - (deadline - Date.now())) / 1000) });
+      await new Promise((r) => setTimeout(r, 4000));
+    }
+    this.waking = false;
+    return false;
+  }
+
+  /** Wake the configured host (if any) and then open the socket. */
+  async connectWithWake(name) {
+    this.gaveUp = false;
+    this.retry = 0;
+    if (this.serverUrl) {
+      const up = await this.wake();
+      if (!up) { this.gaveUp = true; this.emit('unavailable'); return false; }
+    }
+    this.connect(name, true);
+    return true;
   }
 
   /** `force` restarts the retry budget, e.g. when the player asks to play online. */
